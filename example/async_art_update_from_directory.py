@@ -58,6 +58,7 @@ import asyncio
 import time
 import datetime
 import argparse
+import glob
 from signal import SIGTERM, SIGINT
 HAVE_PIL = False
 try:
@@ -560,6 +561,19 @@ class monitor_and_display:
         try:
             if await self.tv.in_artmode():
                 self.log.info('checking directory: {}{}'.format(self.folder, ' every {}'.format(self.get_time(self.period)) if self.period else ''))
+                
+                # ✅ Remove all Zone.Identifier files every time the directory is checked
+                zone_identifier_files = glob.glob(os.path.join(self.folder, "*:Zone.Identifier"))
+                if zone_identifier_files:
+                    self.log.info("IDENTIFIER files found!")
+                for file in zone_identifier_files:
+                    try:
+                        os.remove(file)
+                        self.log.info(f"Deleted: {file}")
+                    except Exception as e:
+                        self.log.error(f"Failed to delete {file}: {e}")
+
+                
                 files = self.get_folder_files()
                 await self.sync_file_list()
                 await self.remove_files(files)
